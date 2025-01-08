@@ -59,6 +59,7 @@ export default function Home() {
       <div className="w-full flex justify-center">
         <input
           className="py-2 px-4 w-[300px] border border-gray-600 focus:border-black"
+          placeholder="Search"
           onChange={onChange}
           value={searchTerm}
         />
