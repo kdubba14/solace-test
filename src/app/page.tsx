@@ -8,9 +8,6 @@ export default function Home() {
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
   const [advocates, setAdvocates] = useState<typeof advocateData>([]);
-  const [filteredAdvocates, setFilteredAdvocates] = useState<
-    typeof advocateData
-  >([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const itemsPerPage = 10; // TODO: Make dynamic and use virtualized list for performance & UI
@@ -22,7 +19,6 @@ export default function Home() {
     ).then((response) => {
       response.json().then((jsonResponse) => {
         setAdvocates(jsonResponse.data);
-        setFilteredAdvocates(jsonResponse.data);
         setTotalPages(jsonResponse.totalPages);
       });
     });
@@ -90,7 +86,7 @@ export default function Home() {
           </tr>
         </thead>
         <tbody>
-          {filteredAdvocates.map((advocate, idx) => {
+          {advocates.map((advocate, idx) => {
             return (
               <tr
                 key={`${advocate.firstName}-${idx}`}
