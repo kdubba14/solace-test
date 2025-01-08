@@ -1,10 +1,12 @@
 "use client";
 
 import { advocateData } from "@/db/seed/advocates";
+import { useDebounce } from "@/utils/useDebounce";
 import { ChangeEvent, useEffect, useState } from "react";
 
 export default function Home() {
   const [searchTerm, setSearchTerm] = useState("");
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
   const [advocates, setAdvocates] = useState<typeof advocateData>([]);
   const [filteredAdvocates, setFilteredAdvocates] = useState<
     typeof advocateData
@@ -22,20 +24,28 @@ export default function Home() {
   useEffect(() => {
     const filteredAdvocates = advocates.filter((advocate) => {
       return (
-        advocate.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        advocate.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        advocate.city.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        advocate.degree.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        advocate.firstName
+          .toLowerCase()
+          .includes(debouncedSearchTerm.toLowerCase()) ||
+        advocate.lastName
+          .toLowerCase()
+          .includes(debouncedSearchTerm.toLowerCase()) ||
+        advocate.city
+          .toLowerCase()
+          .includes(debouncedSearchTerm.toLowerCase()) ||
+        advocate.degree
+          .toLowerCase()
+          .includes(debouncedSearchTerm.toLowerCase()) ||
         advocate.specialties
           .join(" ")
           .toLowerCase()
-          .includes(searchTerm.toLowerCase()) ||
-        advocate.yearsOfExperience === parseInt(searchTerm)
+          .includes(debouncedSearchTerm.toLowerCase()) ||
+        advocate.yearsOfExperience === parseInt(debouncedSearchTerm)
       );
     });
 
     setFilteredAdvocates(filteredAdvocates);
-  }, [advocates, searchTerm]);
+  }, [advocates, debouncedSearchTerm]);
 
   const onChange = (e: ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
