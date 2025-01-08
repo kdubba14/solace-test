@@ -11,41 +11,22 @@ export default function Home() {
   const [filteredAdvocates, setFilteredAdvocates] = useState<
     typeof advocateData
   >([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const itemsPerPage = 10; // TODO: Make dynamic and use virtualized list for performance & UI
 
   useEffect(() => {
-    fetch("/api/advocates").then((response) => {
+    fetch(
+      `/api/advocates?page=${currentPage}&limit=${itemsPerPage}&q=${debouncedSearchTerm}`,
+      { cache: "force-cache" }
+    ).then((response) => {
       response.json().then((jsonResponse) => {
         setAdvocates(jsonResponse.data);
         setFilteredAdvocates(jsonResponse.data);
+        setTotalPages(jsonResponse.totalPages);
       });
     });
-  }, []);
-
-  useEffect(() => {
-    const filteredAdvocates = advocates.filter((advocate) => {
-      return (
-        advocate.firstName
-          .toLowerCase()
-          .includes(debouncedSearchTerm.toLowerCase()) ||
-        advocate.lastName
-          .toLowerCase()
-          .includes(debouncedSearchTerm.toLowerCase()) ||
-        advocate.city
-          .toLowerCase()
-          .includes(debouncedSearchTerm.toLowerCase()) ||
-        advocate.degree
-          .toLowerCase()
-          .includes(debouncedSearchTerm.toLowerCase()) ||
-        advocate.specialties
-          .join(" ")
-          .toLowerCase()
-          .includes(debouncedSearchTerm.toLowerCase()) ||
-        advocate.yearsOfExperience === parseInt(debouncedSearchTerm)
-      );
-    });
-
-    setFilteredAdvocates(filteredAdvocates);
-  }, [advocates, debouncedSearchTerm]);
+  }, [currentPage, itemsPerPage, debouncedSearchTerm]);
 
   const onChange = (e: ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -54,6 +35,18 @@ export default function Home() {
 
   const onReset = () => {
     setSearchTerm("");
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage((prev) => prev + 1);
+    }
+  };
+
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage((prev) => prev - 1);
+    }
   };
 
   return (
@@ -130,6 +123,25 @@ export default function Home() {
           })}
         </tbody>
       </table>
+      <div className="mt-4 flex justify-between">
+        <button
+          onClick={handlePrevPage}
+          disabled={currentPage === 1}
+          className="px-4 py-2 bg-blue-500 text-white rounded disabled:opacity-50"
+        >
+          Previous
+        </button>
+        <span>
+          Page {currentPage} of {totalPages}
+        </span>
+        <button
+          onClick={handleNextPage}
+          disabled={currentPage === totalPages}
+          className="px-4 py-2 bg-blue-500 text-white rounded disabled:opacity-50"
+        >
+          Next
+        </button>
+      </div>
     </main>
   );
 }
