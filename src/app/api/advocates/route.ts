@@ -19,11 +19,11 @@ export async function GET(request: Request) {
         ilike(advocates.lastName, q),
         ilike(advocates.city, q),
         ilike(advocates.degree, q),
-        sql`EXISTS (
-        SELECT 1
-        FROM jsonb_array_elements_text(${advocates.specialties}) AS elem
-        WHERE elem ILIKE ${q}
-      )`,
+        // sql`EXISTS (
+        //   SELECT 1
+        //   FROM jsonb_array_elements_text(${advocates.specialties}) AS elem
+        //   WHERE elem ILIKE ${q}
+        // )`, // TODO: is there a better way to do this?
         eq(advocates.yearsOfExperience, parseInt(q))
       )
     )
