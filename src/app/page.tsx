@@ -10,19 +10,33 @@ export default function Home() {
   const [advocates, setAdvocates] = useState<typeof advocateData>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [sort, setSort] = useState<{
+    column: string;
+    direction: "asc" | "desc";
+  } | null>(null);
   const itemsPerPage = 10; // TODO: Make dynamic and use virtualized list for performance & UI
 
   useEffect(() => {
-    fetch(
-      `/api/advocates?page=${currentPage}&limit=${itemsPerPage}&q=${debouncedSearchTerm}`,
-      { cache: "force-cache" }
-    ).then((response) => {
-      response.json().then((jsonResponse) => {
-        setAdvocates(jsonResponse.data);
-        setTotalPages(jsonResponse.totalPages);
+    setLoading(true);
+    // TODO: remove q= if none
+    const url = `/api/advocates?page=${currentPage}&limit=${itemsPerPage}&q=${debouncedSearchTerm}${
+      sort ? `&sort=${sort.column},${sort.direction}` : ""
+    }`;
+    fetch(url, { cache: "no-store" })
+      .then((response) => {
+        const res = response.clone();
+        res.json().then((jsonResponse) => {
+          setAdvocates(jsonResponse.data);
+          setTotalPages(jsonResponse.totalPages);
+          setLoading(false);
+        });
+      })
+      .catch((err) => {
+        setLoading(false);
+        // TODO: throw error toast/message
       });
-    });
-  }, [currentPage, itemsPerPage, debouncedSearchTerm]);
+  }, [currentPage, sort, itemsPerPage, debouncedSearchTerm]);
 
   const onChange = (e: ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -79,6 +93,22 @@ export default function Home() {
               <th
                 key={h}
                 className="border border-gray-300 px-4 py-2 text-left"
+                onClick={() => {
+                  if (h === "Last Name") {
+                    if (sort) {
+                      if (sort?.direction === "desc") {
+                        setSort({ ...sort, direction: "asc" });
+                      } else {
+                        setSort(null);
+                      }
+                    } else {
+                      setSort({
+                        column: "lastName",
+                        direction: "desc",
+                      });
+                    }
+                  }
+                }}
               >
                 {h}
               </th>
@@ -86,38 +116,42 @@ export default function Home() {
           </tr>
         </thead>
         <tbody>
-          {advocates.map((advocate, idx) => {
-            return (
-              <tr
-                key={`${advocate.firstName}-${idx}`}
-                className="even:bg-gray-100"
-              >
-                <td className="border border-gray-300 px-4 py-2">
-                  {advocate.firstName}
-                </td>
-                <td className="border border-gray-300 px-4 py-2">
-                  {advocate.lastName}
-                </td>
-                <td className="border border-gray-300 px-4 py-2">
-                  {advocate.city}
-                </td>
-                <td className="border border-gray-300 px-4 py-2">
-                  {advocate.degree}
-                </td>
-                <td className="border border-gray-300 px-4 py-2">
-                  {advocate.specialties.map((s, i) => (
-                    <div key={i}>{s}</div>
-                  ))}
-                </td>
-                <td className="border border-gray-300 px-4 py-2">
-                  {advocate.yearsOfExperience}
-                </td>
-                <td className="border border-gray-300 px-4 py-2">
-                  {advocate.phoneNumber}
-                </td>
-              </tr>
-            );
-          })}
+          {loading && (
+            <tr className="w-full text-lg text-center">Loading...</tr>
+          )}
+          {!loading &&
+            advocates.map((advocate, idx) => {
+              return (
+                <tr
+                  key={`${advocate.firstName}-${idx}`}
+                  className="even:bg-gray-100"
+                >
+                  <td className="border border-gray-300 px-4 py-2">
+                    {advocate.firstName}
+                  </td>
+                  <td className="border border-gray-300 px-4 py-2">
+                    {advocate.lastName}
+                  </td>
+                  <td className="border border-gray-300 px-4 py-2">
+                    {advocate.city}
+                  </td>
+                  <td className="border border-gray-300 px-4 py-2">
+                    {advocate.degree}
+                  </td>
+                  <td className="border border-gray-300 px-4 py-2">
+                    {advocate.specialties.map((s, i) => (
+                      <div key={i}>{s}</div>
+                    ))}
+                  </td>
+                  <td className="border border-gray-300 px-4 py-2">
+                    {advocate.yearsOfExperience}
+                  </td>
+                  <td className="border border-gray-300 px-4 py-2">
+                    {advocate.phoneNumber}
+                  </td>
+                </tr>
+              );
+            })}
         </tbody>
       </table>
       <div className="mt-4 flex justify-between">
@@ -133,7 +167,7 @@ export default function Home() {
         </span>
         <button
           onClick={handleNextPage}
-          disabled={currentPage === totalPages}
+          disabled={currentPage >= totalPages}
           className="px-4 py-2 bg-blue-500 text-white rounded disabled:opacity-50"
         >
           Next
